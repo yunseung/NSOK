@@ -14,11 +14,14 @@ import android.webkit.WebViewClient;
 
 import com.neonex.nsok.R;
 import com.neonex.nsok.common.Nsok;
+import com.neonex.nsok.util.AppExitPreventHandler;
+import com.neonex.nsok.util.NsokLog;
 
 public class MainActivity extends AppCompatActivity {
 
-    private static WebView mNsokWebView = null;
-    private SwipeRefreshLayout mSwipeRefreshLayout = null;
+    private static WebView mNsokWebView = null;                                 // NSOK WebView
+    private SwipeRefreshLayout mSwipeRefreshLayout = null;                      // 아래로 당겨서 새로고침 레이아웃
+    private AppExitPreventHandler mAppExitPreventHandler = null;                // 뒤로가기 한 번에 앱 죽이는 것 방지 핸들러
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -26,6 +29,8 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
 
         initializeWebView();
+
+        mAppExitPreventHandler = new AppExitPreventHandler(this);
     }
 
     private void initializeWebView() {
@@ -78,4 +83,15 @@ public class MainActivity extends AppCompatActivity {
             super.onReceivedHttpError(view, request, errorResponse);
         }
     }
+
+    @Override
+    public void onBackPressed() {
+
+        int fragmentStackCnt = getSupportFragmentManager().getBackStackEntryCount();
+            if (fragmentStackCnt == 0) {
+                mAppExitPreventHandler.onBackPressed();
+            } else {
+                super.onBackPressed();
+            }
+        }
 }
