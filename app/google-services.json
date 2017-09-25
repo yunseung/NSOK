@@ -1,0 +1,55 @@
+{
+  "project_info": {
+    "project_number": "616662555716",
+    "firebase_url": "https://nsok-ef928.firebaseio.com",
+    "project_id": "nsok-ef928",
+    "storage_bucket": "nsok-ef928.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:616662555716:android:a451add3c469e1d0",
+        "android_client_info": {
+          "package_name": "com.neonex.nsok"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "616662555716-5fgt0ifdie7d5jj1nl2d6430q86lqaj8.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.neonex.nsok",
+            "certificate_hash": "df96c5cd09743420ff22c11ab0661760891bccfb"
+          }
+        },
+        {
+          "client_id": "616662555716-irealr1vop9uri82t5jc1elfvp3ie1jm.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyB1eE9QA_AC-Xy2DBix8DcJ77GOT-T_WIg"
+        }
+      ],
+      "services": {
+        "analytics_service": {
+          "status": 1
+        },
+        "appinvite_service": {
+          "status": 2,
+          "other_platform_oauth_client": [
+            {
+              "client_id": "616662555716-irealr1vop9uri82t5jc1elfvp3ie1jm.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        },
+        "ads_service": {
+          "status": 2
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
