@@ -16,7 +16,7 @@ public class Nsok {
 
     private enum ServerUrl {
         API_DEV_URL(""),
-        WEB_DEV_URL("http://192.168.1.62/mobile/login/loginForm.do"),
+        WEB_DEV_URL("http://192.168.1.154/mobile/login/loginForm.do"),
 
         API_REAL_URL(""),
         WEB_REAL_URL("");

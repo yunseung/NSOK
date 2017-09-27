@@ -10,7 +10,7 @@ import com.neonex.nsok.R;
  * Created by yun on 2017-09-25.
  */
 
-public class AppExitPreventHandler {
+public class AppExitPreventUtil {
 
     int delayTime = 2500;
     private long backKeyPressedTime = 0;
@@ -18,7 +18,7 @@ public class AppExitPreventHandler {
 
     private Context mContext ;
 
-    public AppExitPreventHandler(Context _context) {
+    public AppExitPreventUtil(Context _context) {
         mContext = _context;
     }
 

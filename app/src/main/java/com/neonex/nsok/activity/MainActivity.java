@@ -1,9 +1,10 @@
 package com.neonex.nsok.activity;
 
+import android.content.Context;
 import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
-import android.util.Log;
+import android.webkit.JavascriptInterface;
 import android.webkit.JsResult;
 import android.webkit.WebChromeClient;
 import android.webkit.WebResourceError;
@@ -11,17 +12,17 @@ import android.webkit.WebResourceRequest;
 import android.webkit.WebResourceResponse;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
+import android.widget.Toast;
 
 import com.neonex.nsok.R;
 import com.neonex.nsok.common.Nsok;
-import com.neonex.nsok.util.AppExitPreventHandler;
-import com.neonex.nsok.util.NsokLog;
+import com.neonex.nsok.util.AppExitPreventUtil;
 
 public class MainActivity extends AppCompatActivity {
 
     private static WebView mNsokWebView = null;                                 // NSOK WebView
     private SwipeRefreshLayout mSwipeRefreshLayout = null;                      // 아래로 당겨서 새로고침 레이아웃
-    private AppExitPreventHandler mAppExitPreventHandler = null;                // 뒤로가기 한 번에 앱 죽이는 것 방지 핸들러
+    private AppExitPreventUtil mAppExitPreventHandler = null;                // 뒤로가기 한 번에 앱 죽이는 것 방지 핸들러
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -30,7 +31,20 @@ public class MainActivity extends AppCompatActivity {
 
         initializeWebView();
 
-        mAppExitPreventHandler = new AppExitPreventHandler(this);
+        mAppExitPreventHandler = new AppExitPreventUtil(this);
+    }
+
+    public class AAA {
+        Context context;
+
+        AAA(Context c) {
+            context = c;
+        }
+
+        @JavascriptInterface
+        public void showToast(String toast) {
+            Toast.makeText(context, toast, Toast.LENGTH_LONG).show();
+        }
     }
 
     private void initializeWebView() {
@@ -38,6 +52,8 @@ public class MainActivity extends AppCompatActivity {
         mNsokWebView.setWebChromeClient(new NsokWebChromeClient());
         mNsokWebView.setWebViewClient(new NsokWebViewClient());
         mNsokWebView.getSettings().setJavaScriptEnabled(true);
+
+        mNsokWebView.addJavascriptInterface(new AAA(this), "nsok_bridge");
 
         mNsokWebView.loadUrl(Nsok.connWebUrl);
 
