@@ -2,6 +2,8 @@ package com.neonex.nsok.util;
 
 import android.util.Log;
 
+import com.neonex.nsok.common.Nsok;
+
 /**
  * Created by yun on 2017-08-21.
  */
@@ -29,6 +31,7 @@ public class NsokLog {
 
     /**
      * 긴 로그는 모두 출력이 되지 않으므로, 잘라서 출력 하는 함수
+     * develop level 에서만 출력한다.
      *
      * @param logLevel : Log.VERBOSE, Log.DEBUG...
      * @param tag      : TAG
@@ -46,29 +49,33 @@ public class NsokLog {
                     end = length;
                 }
 
-                if (logLevel == Log.VERBOSE) {
-                    NsokLog.v(tag, log.substring(start, end));
-                } else if (logLevel == Log.DEBUG) {
-                    NsokLog.d(tag, log.substring(start, end));
-                } else if (logLevel == Log.INFO) {
-                    NsokLog.i(tag, log.substring(start, end));
-                } else if (logLevel == Log.WARN) {
-                    NsokLog.w(tag, log.substring(start, end));
-                } else if (logLevel == Log.ERROR) {
-                    NsokLog.e(tag, log.substring(start, end));
+                switch (logLevel) {
+                    case Log.VERBOSE:
+                    case Log.DEBUG:
+                    case Log.INFO:
+                    case Log.WARN:
+                        if (Nsok.serverTarget == Nsok.ServerConnectTarget.TARGET_DEV) {
+                            NsokLog.w(tag, log.substring(start, end));
+                        }
+                        break;
+                    case Log.ERROR:
+                        NsokLog.e(tag, log.substring(start, end));
+                        break;
                 }
             }
         } else {
-            if (logLevel == Log.VERBOSE) {
-                NsokLog.v(tag, log);
-            } else if (logLevel == Log.DEBUG) {
-                NsokLog.d(tag, log);
-            } else if (logLevel == Log.INFO) {
-                NsokLog.i(tag, log);
-            } else if (logLevel == Log.WARN) {
-                NsokLog.w(tag, log);
-            } else if (logLevel == Log.ERROR) {
-                NsokLog.e(tag, log);
+            switch (logLevel) {
+                case Log.VERBOSE:
+                case Log.DEBUG:
+                case Log.INFO:
+                case Log.WARN:
+                    if (Nsok.serverTarget == Nsok.ServerConnectTarget.TARGET_DEV) {
+                        NsokLog.w(tag, log);
+                    }
+                    break;
+                case Log.ERROR:
+                    NsokLog.e(tag, log);
+                    break;
             }
         }
     }
