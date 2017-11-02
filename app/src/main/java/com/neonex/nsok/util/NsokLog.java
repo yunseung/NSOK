@@ -69,9 +69,9 @@ public class NsokLog {
                 case Log.DEBUG:
                 case Log.INFO:
                 case Log.WARN:
-                    if (Nsok.serverTarget == Nsok.ServerConnectTarget.TARGET_DEV) {
+//                    if (Nsok.serverTarget == Nsok.ServerConnectTarget.TARGET_DEV) {
                         NsokLog.w(tag, log);
-                    }
+//                    }
                     break;
                 case Log.ERROR:
                     NsokLog.e(tag, log);

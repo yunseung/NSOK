@@ -1,6 +1,6 @@
 package com.neonex.nsok.fcm;
 
-import android.util.Log;
+import android.content.Intent;
 
 import com.google.firebase.iid.FirebaseInstanceId;
 import com.google.firebase.iid.FirebaseInstanceIdService;
@@ -21,6 +21,10 @@ public class MyFirebaseInstanceIDService extends FirebaseInstanceIdService {
         // Get updated InstanceID token.
         String refreshedToken = FirebaseInstanceId.getInstance().getToken();
         NsokLog.d(TAG, "Refreshed token: " + refreshedToken);
+
+        Intent sendIntent = new Intent("com.nsok.fcm.FCM_TOKEN");
+        sendIntent.putExtra("token", refreshedToken);
+        sendBroadcast(sendIntent);
 
         // If you want to send messages to this application instance or
         // manage this apps subscriptions on the server side, send the
