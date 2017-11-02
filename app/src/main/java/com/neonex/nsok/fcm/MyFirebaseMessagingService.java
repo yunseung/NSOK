@@ -15,9 +15,11 @@ import android.support.v7.app.NotificationCompat;
 import com.google.firebase.messaging.RemoteMessage;
 import com.neonex.nsok.R;
 import com.neonex.nsok.activity.MainActivity;
+import com.neonex.nsok.common.ReceiverEvent;
 import com.neonex.nsok.util.CommonUtils;
 import com.neonex.nsok.util.NsokLog;
 
+import org.greenrobot.eventbus.EventBus;
 import org.json.JSONObject;
 
 import java.util.Map;
@@ -37,32 +39,23 @@ public class MyFirebaseMessagingService extends FirebaseMessagingService {
         if (remoteMessage.getNotification() != null) {
 
             {
-                NsokLog.e("dataChat",remoteMessage.getData().toString());
+                NsokLog.d("dataChat",remoteMessage.getData().toString());
                 try
                 {
                     Map<String, String> params = remoteMessage.getData();
                     JSONObject object = new JSONObject(params);
-                    NsokLog.e("JSON_OBJECT", object.toString());
+                    NsokLog.d("JSON_OBJECT", object.toString());
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
             }
 
-            RemoteMessage.Notification notification = remoteMessage.getNotification();
-            NsokLog.d(TAG , "title : " + notification.getTitle());
-            NsokLog.d(TAG , "body : " + notification.getBody());
-
-            final StringBuffer strLog = new StringBuffer();
-            strLog.append("푸쉬에서 받은 메시지\n");
-            strLog.append("제목 : " + notification.getTitle() + "\n");
-            strLog.append("내용 : " + notification.getBody());
+            EventBus.getDefault().post(new ReceiverEvent(remoteMessage.getData().get("targetUrl").toString()));
 
             Handler handler = new Handler(getMainLooper(), new Handler.Callback() {
                 @Override
                 public boolean handleMessage(Message msg) {
 
-
-                    CommonUtils.showToast(getApplicationContext() , strLog.toString());
 
                     return false;
                 }

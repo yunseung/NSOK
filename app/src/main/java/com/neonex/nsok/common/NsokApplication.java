@@ -5,6 +5,8 @@ import android.app.Application;
 import android.content.Context;
 import android.os.Bundle;
 
+import org.greenrobot.eventbus.EventBus;
+
 /**
  * Created by yun on 2017-09-22.
  */
@@ -15,5 +17,15 @@ public class NsokApplication extends Application {
     private static Activity mCurrentActivity = null;
     private static Bundle mBundle = null;
 
+    @Override
+    public void onCreate() {
+        super.onCreate();
+
+        EventBus.builder()
+                .logNoSubscriberMessages(false)
+                .sendNoSubscriberEvent(false)
+                .throwSubscriberException(false)
+                .installDefaultEventBus();
+    }
 }
 
