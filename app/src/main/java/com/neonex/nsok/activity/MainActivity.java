@@ -187,11 +187,14 @@ public class MainActivity extends AppCompatActivity {
     @Override
     public void onBackPressed() {
 
-        int fragmentStackCnt = getSupportFragmentManager().getBackStackEntryCount();
-        if (fragmentStackCnt == 0) {
-            mAppExitPreventHandler.onBackPressed();
+        if (mNsokWebView.canGoBack() && !mNsokWebView.getUrl().equals("http://211.173.192.37:28080/mobile/main.do")) {
+            mNsokWebView.goBack();
         } else {
-            super.onBackPressed();
+            if (getSupportFragmentManager().getBackStackEntryCount() == 0) {
+                mAppExitPreventHandler.onBackPressed();
+            } else {
+                super.onBackPressed();
+            }
         }
     }
 }
