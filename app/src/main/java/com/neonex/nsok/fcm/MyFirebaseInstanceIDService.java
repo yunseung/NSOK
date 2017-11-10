@@ -20,7 +20,6 @@ public class MyFirebaseInstanceIDService extends FirebaseInstanceIdService {
     public void onTokenRefresh() {
         // Get updated InstanceID token.
         String refreshedToken = FirebaseInstanceId.getInstance().getToken();
-        NsokLog.d(TAG, "Refreshed token: " + refreshedToken);
 
         Intent sendIntent = new Intent("com.nsok.fcm.FCM_TOKEN");
         sendIntent.putExtra("token", refreshedToken);

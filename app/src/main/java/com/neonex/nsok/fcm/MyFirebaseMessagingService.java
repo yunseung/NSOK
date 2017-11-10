@@ -11,6 +11,7 @@ import android.os.Handler;
 import android.os.Message;
 import android.os.PowerManager;
 import android.support.v7.app.NotificationCompat;
+import android.widget.Toast;
 
 import com.google.firebase.messaging.RemoteMessage;
 import com.neonex.nsok.R;
@@ -50,25 +51,13 @@ public class MyFirebaseMessagingService extends FirebaseMessagingService {
                 }
             }
 
-            EventBus.getDefault().post(new ReceiverEvent(remoteMessage.getData().get("targetUrl").toString()));
-
-            Handler handler = new Handler(getMainLooper(), new Handler.Callback() {
-                @Override
-                public boolean handleMessage(Message msg) {
-
-
-                    return false;
-                }
-            });
-
-            handler.sendEmptyMessage(0);
-
-
         }
-        sendPushNotification(remoteMessage.getData().get("message"));
+        sendPushNotification(remoteMessage);
     }
 
-    private void sendPushNotification(String message) {
+    private void sendPushNotification(RemoteMessage remoteMessage) {
+        // EventBus 를 통해서 넘어온 데이터를 액티비티로 보낸다 (화면 액션에 필요)
+        EventBus.getDefault().postSticky(new ReceiverEvent(remoteMessage.getData().get("targetUrl").toString()));
 
         Intent intent = new Intent(this, MainActivity.class);
         intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
@@ -78,8 +67,8 @@ public class MyFirebaseMessagingService extends FirebaseMessagingService {
         Uri defaultSoundUri= RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION);
         android.support.v4.app.NotificationCompat.Builder notificationBuilder = new NotificationCompat.Builder(this)
                 .setSmallIcon(R.mipmap.ic_launcher).setLargeIcon(BitmapFactory.decodeResource(getResources(), R.mipmap.ic_launcher) )
-                .setContentTitle("Push Title ")
-                .setContentText(message)
+                .setContentTitle(remoteMessage.getNotification().getTitle().toString())
+                .setContentText(remoteMessage.getNotification().getBody().toString())
                 .setAutoCancel(true)
                 .setSound(defaultSoundUri).setLights(000000255,500,2000)
                 .setContentIntent(pendingIntent);
