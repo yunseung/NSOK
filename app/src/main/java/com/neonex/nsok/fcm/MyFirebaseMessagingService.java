@@ -7,18 +7,16 @@ import android.content.Intent;
 import android.graphics.BitmapFactory;
 import android.media.RingtoneManager;
 import android.net.Uri;
-import android.os.Handler;
-import android.os.Message;
 import android.os.PowerManager;
 import android.support.v7.app.NotificationCompat;
+import android.util.Log;
 import android.widget.Toast;
 
 import com.google.firebase.messaging.RemoteMessage;
 import com.neonex.nsok.R;
 import com.neonex.nsok.activity.MainActivity;
 import com.neonex.nsok.common.ReceiverEvent;
-import com.neonex.nsok.util.CommonUtils;
-import com.neonex.nsok.util.NsokLog;
+import com.neonex.nsok.util.NsokPreferences;
 
 import org.greenrobot.eventbus.EventBus;
 import org.json.JSONObject;
@@ -37,18 +35,15 @@ public class MyFirebaseMessagingService extends FirebaseMessagingService {
     @Override
     public void onMessageReceived(RemoteMessage remoteMessage) {
 
-        if (remoteMessage.getNotification() != null) {
-
-            {
-                NsokLog.d("dataChat",remoteMessage.getData().toString());
-                try
-                {
-                    Map<String, String> params = remoteMessage.getData();
-                    JSONObject object = new JSONObject(params);
-                    NsokLog.d("JSON_OBJECT", object.toString());
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
+        if (remoteMessage.getData() != null) {
+            NsokPreferences.setTargetUrl(this, remoteMessage.getData().get("targetUrl"));
+            Log.e("dataChat", remoteMessage.getData().toString());
+            try {
+                Map<String, String> params = remoteMessage.getData();
+                JSONObject object = new JSONObject(params);
+                Log.d("JSON_OBJECT", object.toString());
+            } catch (Exception e) {
+                e.printStackTrace();
             }
 
         }
@@ -60,17 +55,18 @@ public class MyFirebaseMessagingService extends FirebaseMessagingService {
         EventBus.getDefault().postSticky(new ReceiverEvent(remoteMessage.getData().get("targetUrl").toString()));
 
         Intent intent = new Intent(this, MainActivity.class);
-        intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+        intent.addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP);
         PendingIntent pendingIntent = PendingIntent.getActivity(this, 0 /* Request code */, intent,
                 PendingIntent.FLAG_ONE_SHOT);
 
-        Uri defaultSoundUri= RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION);
+        Uri defaultSoundUri = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION);
         android.support.v4.app.NotificationCompat.Builder notificationBuilder = new NotificationCompat.Builder(this)
-                .setSmallIcon(R.mipmap.ic_launcher).setLargeIcon(BitmapFactory.decodeResource(getResources(), R.mipmap.ic_launcher) )
+                .setSmallIcon(R.mipmap.ic_launcher).setLargeIcon(BitmapFactory.decodeResource(getResources(), R.mipmap.ic_launcher))
                 .setContentTitle(remoteMessage.getNotification().getTitle().toString())
                 .setContentText(remoteMessage.getNotification().getBody().toString())
                 .setAutoCancel(true)
-                .setSound(defaultSoundUri).setLights(000000255,500,2000)
+                .setSound(defaultSoundUri).setLights(000000255, 500, 2000)
+                .setVibrate(new long[] {1000, 1000, 1000})
                 .setContentIntent(pendingIntent);
 
         NotificationManager notificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
@@ -80,6 +76,8 @@ public class MyFirebaseMessagingService extends FirebaseMessagingService {
         wakelock.acquire(3000);
 
         notificationManager.notify(0 /* ID of notification */, notificationBuilder.build());
+
+
     }
 
 }

@@ -35,17 +35,20 @@ import com.neonex.nsok.util.RealPathUtil;
 
 import org.greenrobot.eventbus.EventBus;
 import org.greenrobot.eventbus.Subscribe;
+import org.greenrobot.eventbus.ThreadMode;
 
 import java.io.File;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.Iterator;
+import java.util.Set;
 
 public class MainActivity extends AppCompatActivity {
 
     private static WebView mNsokWebView = null;                                 // NSOK WebView
     private SwipeRefreshLayout mSwipeRefreshLayout = null;                      // 아래로 당겨서 새로고침 레이아웃
-    private AppExitPreventUtil mAppExitPreventHandler = null;                   // 뒤로가기 한 번에 앱 죽이는 것 방지 핸들러
+    private String mAddress = Nsok.connWebUrl;
 
     private NsokBridge mNsokBridge = null;
     private String mPushData = null;
@@ -59,36 +62,52 @@ public class MainActivity extends AppCompatActivity {
     private BroadcastReceiver mBroadcastReceiver = null;
     private Intent mIntentService = null;
 
+    private AppExitPreventUtil mAppExitPreventHandler = null;                   // 뒤로가기 한 번에 앱 죽이는 것 방지 핸들러
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-
         Bundle bundle = getIntent().getExtras();
-        if (bundle != null)
-        Log.e("bundle", bundle.toString());
 
-        // Register Immortal Service
-        mIntentService = new Intent(this, PersistentService.class);
-
-        try {
-            IntentFilter filter = new IntentFilter("com.nsok.push");
-            registerReceiver(mBroadcastReceiver, filter);
-            startService(mIntentService);
-        } catch (Exception e) {
-            e.printStackTrace();
+        if (bundle != null) {
+            Set<String> keyset = bundle.keySet();
+            for (Iterator<String> it = keyset.iterator(); it.hasNext();) {
+                String targetUrl = it.next();
+                if (targetUrl.equals("targetUrl")) {
+                    mAddress = bundle.get("targetUrl").toString();
+                }
+            }
         }
 
+//        if (getIntent() != null) {
+//            if (getIntent().getExtras().get("targetUrl") != null) {
+//                Log.e("onCreate", "제발 ㅠㅠ : " + getIntent().getExtras().get("targetUrl").toString());
+//                mAddress = getIntent().getExtras().get("targetUrl").toString();
+//            }
+//        }
+
+        // Register Immortal Service
+//        mIntentService = new Intent(this, PersistentService.class);
+//
+//        try {
+//            IntentFilter filter = new IntentFilter("com.nsok.push");
+//            registerReceiver(mBroadcastReceiver, filter);
+//            startService(mIntentService);
+//        } catch (Exception e) {
+//            e.printStackTrace();
+//        }
+
         // Broadcast 로 fcm token 받기
-        IntentFilter intentFilter = new IntentFilter();
-        intentFilter.addAction("com.nsok.fcm.FCM_TOKEN");
+        IntentFilter tokenIntentFilter = new IntentFilter();
+        tokenIntentFilter.addAction("com.nsok.fcm.FCM_TOKEN");
 
         registerReceiver(new BroadcastReceiver() {
             @Override
             public void onReceive(Context context, Intent intent) {
                 NsokPreferences.setFcmToken(MainActivity.this, intent.getStringExtra("token"));
             }
-        }, intentFilter);
+        }, tokenIntentFilter);
 
         mNsokBridge = new NsokBridge(this);
         mNsokBridge.setOnFcmTokenSendListener(new NsokBridge.OnFcmTokenSendListener() {
@@ -112,7 +131,6 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onStart() {
         super.onStart();
-
         EventBus.getDefault().register(this);
     }
 
@@ -124,8 +142,13 @@ public class MainActivity extends AppCompatActivity {
     }
 
     @Override
+    protected void onResume() {
+        super.onResume();
+    }
+
+    @Override
     protected void onDestroy() {
-        unregisterReceiver(mBroadcastReceiver);
+//        unregisterReceiver(mBroadcastReceiver);
         super.onDestroy();
     }
 
@@ -133,11 +156,22 @@ public class MainActivity extends AppCompatActivity {
     protected void onNewIntent(Intent intent) {
         super.onNewIntent(intent);
 
+        Bundle bundle = intent.getExtras();
+
+        if (bundle != null) {
+            Set<String> keyset = bundle.keySet();
+            for (Iterator<String> it = keyset.iterator(); it.hasNext();) {
+                String targetUrl = it.next();
+                if (targetUrl.equals("targetUrl")) {
+                    mAddress = bundle.get("targetUrl").toString();
+                }
+            }
+        }
+
         mNsokWebView.post(new Runnable() {
             @Override
             public void run() {
-                mNsokWebView.loadUrl(mPushData);
-
+                mNsokWebView.loadUrl(mAddress);
             }
         });
     }
@@ -153,7 +187,7 @@ public class MainActivity extends AppCompatActivity {
         mNsokWebView.requestFocus();
         mNsokWebView.requestFocusFromTouch();
         mNsokWebView.getSettings().setJavaScriptEnabled(true);
-        mNsokWebView.loadUrl(Nsok.connWebUrl);
+        mNsokWebView.loadUrl(mAddress);
 
 
         // 아래로 당겨서 새로고침.
@@ -171,9 +205,10 @@ public class MainActivity extends AppCompatActivity {
         );
     }
 
-    @Subscribe
-    public void onEventFromReceiver(ReceiverEvent event) {
-        mPushData = event.message;
+    @Subscribe(threadMode = ThreadMode.BACKGROUND)
+    public void onMessage(ReceiverEvent event) {
+        Log.e("EventBus", "EventBus data : " + event.message);
+        mAddress = event.message;
     }
 
     final class NsokWebChromeClient extends WebChromeClient {
@@ -379,8 +414,8 @@ public class MainActivity extends AppCompatActivity {
     @Override
     public void onBackPressed() {
 
-        if (mNsokWebView.canGoBack() && !mNsokWebView.getUrl().equals("http://211.173.192.37:28080/mobile/main.do")
-                && !mNsokWebView.getUrl().equals("http://211.173.192.37:28080/mobile/login/loginForm.do")) {
+        if (mNsokWebView.canGoBack() && !mNsokWebView.getUrl().contains("/mobile/main.do")
+                && !mNsokWebView.getUrl().contains("/login/loginForm.do")) {
             mNsokWebView.goBack();
         } else {
             if (getSupportFragmentManager().getBackStackEntryCount() == 0) {
