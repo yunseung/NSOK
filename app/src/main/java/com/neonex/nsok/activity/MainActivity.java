@@ -80,35 +80,6 @@ public class MainActivity extends AppCompatActivity {
             }
         }
 
-//        if (getIntent() != null) {
-//            if (getIntent().getExtras().get("targetUrl") != null) {
-//                Log.e("onCreate", "제발 ㅠㅠ : " + getIntent().getExtras().get("targetUrl").toString());
-//                mAddress = getIntent().getExtras().get("targetUrl").toString();
-//            }
-//        }
-
-        // Register Immortal Service
-//        mIntentService = new Intent(this, PersistentService.class);
-//
-//        try {
-//            IntentFilter filter = new IntentFilter("com.nsok.push");
-//            registerReceiver(mBroadcastReceiver, filter);
-//            startService(mIntentService);
-//        } catch (Exception e) {
-//            e.printStackTrace();
-//        }
-
-        // Broadcast 로 fcm token 받기
-        IntentFilter tokenIntentFilter = new IntentFilter();
-        tokenIntentFilter.addAction("com.nsok.fcm.FCM_TOKEN");
-
-        registerReceiver(new BroadcastReceiver() {
-            @Override
-            public void onReceive(Context context, Intent intent) {
-                NsokPreferences.setFcmToken(MainActivity.this, intent.getStringExtra("token"));
-            }
-        }, tokenIntentFilter);
-
         mNsokBridge = new NsokBridge(this);
         mNsokBridge.setOnFcmTokenSendListener(new NsokBridge.OnFcmTokenSendListener() {
             @Override
@@ -116,7 +87,6 @@ public class MainActivity extends AppCompatActivity {
                 mNsokWebView.post(new Runnable() {
                     @Override
                     public void run() {
-                        Log.e("push key", "push key : " + NsokPreferences.getFcmToken(MainActivity.this));
                         mNsokWebView.loadUrl("javascript:getFcmToken('" + NsokPreferences.getFcmToken(MainActivity.this) + "');");
                     }
                 });
@@ -148,7 +118,6 @@ public class MainActivity extends AppCompatActivity {
 
     @Override
     protected void onDestroy() {
-//        unregisterReceiver(mBroadcastReceiver);
         super.onDestroy();
     }
 
@@ -207,7 +176,6 @@ public class MainActivity extends AppCompatActivity {
 
     @Subscribe(threadMode = ThreadMode.BACKGROUND)
     public void onMessage(ReceiverEvent event) {
-        Log.e("EventBus", "EventBus data : " + event.message);
         mAddress = event.message;
     }
 

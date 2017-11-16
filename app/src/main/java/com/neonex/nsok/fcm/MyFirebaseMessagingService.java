@@ -7,16 +7,14 @@ import android.content.Intent;
 import android.graphics.BitmapFactory;
 import android.media.RingtoneManager;
 import android.net.Uri;
-import android.os.PowerManager;
 import android.support.v7.app.NotificationCompat;
-import android.util.Log;
-import android.widget.Toast;
 
 import com.google.firebase.messaging.RemoteMessage;
 import com.neonex.nsok.R;
 import com.neonex.nsok.activity.MainActivity;
 import com.neonex.nsok.common.ReceiverEvent;
-import com.neonex.nsok.util.NsokPreferences;
+import com.neonex.nsok.util.NsokLog;
+import com.neonex.nsok.util.WakeLockUtil;
 
 import org.greenrobot.eventbus.EventBus;
 import org.json.JSONObject;
@@ -34,19 +32,20 @@ public class MyFirebaseMessagingService extends FirebaseMessagingService {
 
     @Override
     public void onMessageReceived(RemoteMessage remoteMessage) {
+        WakeLockUtil.acquireCpuWakeLock(this);
 
         if (remoteMessage.getData() != null) {
-            NsokPreferences.setTargetUrl(this, remoteMessage.getData().get("targetUrl"));
-            Log.e("dataChat", remoteMessage.getData().toString());
+            NsokLog.d("dataChat", remoteMessage.getData().toString());
             try {
                 Map<String, String> params = remoteMessage.getData();
                 JSONObject object = new JSONObject(params);
-                Log.d("JSON_OBJECT", object.toString());
+                NsokLog.d("JSON_OBJECT", object.toString());
             } catch (Exception e) {
                 e.printStackTrace();
             }
 
         }
+
         sendPushNotification(remoteMessage);
     }
 
@@ -71,12 +70,7 @@ public class MyFirebaseMessagingService extends FirebaseMessagingService {
 
         NotificationManager notificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
 
-        PowerManager pm = (PowerManager) this.getSystemService(Context.POWER_SERVICE);
-        PowerManager.WakeLock wakelock = pm.newWakeLock(PowerManager.SCREEN_DIM_WAKE_LOCK | PowerManager.ACQUIRE_CAUSES_WAKEUP, TAG);
-        wakelock.acquire(3000);
-
         notificationManager.notify(0 /* ID of notification */, notificationBuilder.build());
-
 
     }
 
