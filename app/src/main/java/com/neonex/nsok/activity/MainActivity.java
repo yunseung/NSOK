@@ -1,15 +1,13 @@
 package com.neonex.nsok.activity;
 
 import android.annotation.TargetApi;
-import android.content.BroadcastReceiver;
-import android.content.Context;
 import android.content.Intent;
-import android.content.IntentFilter;
 import android.graphics.Bitmap;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
+import android.os.Message;
 import android.provider.MediaStore;
 import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.app.AppCompatActivity;
@@ -21,6 +19,7 @@ import android.webkit.WebChromeClient;
 import android.webkit.WebResourceError;
 import android.webkit.WebResourceRequest;
 import android.webkit.WebResourceResponse;
+import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
 
@@ -28,7 +27,6 @@ import com.neonex.nsok.R;
 import com.neonex.nsok.common.Nsok;
 import com.neonex.nsok.common.ReceiverEvent;
 import com.neonex.nsok.javascript.NsokBridge;
-import com.neonex.nsok.service.PersistentService;
 import com.neonex.nsok.util.AppExitPreventUtil;
 import com.neonex.nsok.util.NsokPreferences;
 import com.neonex.nsok.util.RealPathUtil;
@@ -48,19 +46,15 @@ public class MainActivity extends AppCompatActivity {
 
     private static WebView mNsokWebView = null;                                 // NSOK WebView
     private SwipeRefreshLayout mSwipeRefreshLayout = null;                      // 아래로 당겨서 새로고침 레이아웃
-    private String mAddress = Nsok.connWebUrl;
+    private String mAddress = Nsok.connWebUrl + "/mobile/index.do";
 
     private NsokBridge mNsokBridge = null;
-    private String mPushData = null;
 
     private static final String TYPE_IMAGE = "image/*";
     private static final int INPUT_FILE_REQUEST_CODE = 1;
     private ValueCallback<Uri> mUploadMessage;
     private ValueCallback<Uri[]> mFilePathCallback;
     private String mCameraPhotoPath;
-
-    private BroadcastReceiver mBroadcastReceiver = null;
-    private Intent mIntentService = null;
 
     private AppExitPreventUtil mAppExitPreventHandler = null;                   // 뒤로가기 한 번에 앱 죽이는 것 방지 핸들러
 
@@ -72,7 +66,7 @@ public class MainActivity extends AppCompatActivity {
 
         if (bundle != null) {
             Set<String> keyset = bundle.keySet();
-            for (Iterator<String> it = keyset.iterator(); it.hasNext();) {
+            for (Iterator<String> it = keyset.iterator(); it.hasNext(); ) {
                 String targetUrl = it.next();
                 if (targetUrl.equals("targetUrl")) {
                     mAddress = bundle.get("targetUrl").toString();
@@ -87,6 +81,7 @@ public class MainActivity extends AppCompatActivity {
                 mNsokWebView.post(new Runnable() {
                     @Override
                     public void run() {
+                        Log.e("NSOK PUSH KEY", "key is : " + NsokPreferences.getFcmToken(MainActivity.this));
                         mNsokWebView.loadUrl("javascript:getFcmToken('" + NsokPreferences.getFcmToken(MainActivity.this) + "');");
                     }
                 });
@@ -129,7 +124,7 @@ public class MainActivity extends AppCompatActivity {
 
         if (bundle != null) {
             Set<String> keyset = bundle.keySet();
-            for (Iterator<String> it = keyset.iterator(); it.hasNext();) {
+            for (Iterator<String> it = keyset.iterator(); it.hasNext(); ) {
                 String targetUrl = it.next();
                 if (targetUrl.equals("targetUrl")) {
                     mAddress = bundle.get("targetUrl").toString();
@@ -180,6 +175,20 @@ public class MainActivity extends AppCompatActivity {
     }
 
     final class NsokWebChromeClient extends WebChromeClient {
+
+        @Override
+        public boolean onCreateWindow(WebView view, boolean isDialog, boolean isUserGesture, Message resultMsg) {
+            final WebSettings settings = view.getSettings();
+            settings.setDomStorageEnabled(true);
+            settings.setJavaScriptEnabled(true);
+            settings.setAllowFileAccess(true);
+            settings.setAllowContentAccess(true);
+            view.setWebChromeClient(this);
+            WebView.WebViewTransport transport = (WebView.WebViewTransport) resultMsg.obj;
+            transport.setWebView(view);
+            resultMsg.sendToTarget();
+            return false;
+        }
 
         @Override
         public void onProgressChanged(WebView view, int newProgress) {
