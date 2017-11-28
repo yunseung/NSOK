@@ -16,7 +16,8 @@ public class Nsok {
 
     private enum ServerUrl {
         API_DEV_URL(""),
-        WEB_DEV_URL("http://192.168.11.199:28088"), // 네오넥스 개발서버
+        WEB_DEV_URL("http://106.248.228.114:28088"), // 네오넥스 오픈서버
+//        WEB_DEV_URL("http://192.168.11.199:28088"), // 네오넥스 개발서버
 //        WEB_DEV_URL("http://211.173.192.37:28080"), // NSOK 개발서버
 //        WEB_DEV_URL("http://211.173.192.37:3306"), // 임시
 //        WEB_DEV_URL("http://192.168.11.154:80"), // 개발

@@ -1,7 +1,10 @@
 package com.neonex.nsok.activity;
 
+import android.Manifest;
 import android.annotation.TargetApi;
+import android.app.DownloadManager;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.net.Uri;
 import android.os.Build;
@@ -9,10 +12,13 @@ import android.os.Bundle;
 import android.os.Environment;
 import android.os.Message;
 import android.provider.MediaStore;
+import android.support.v4.app.ActivityCompat;
+import android.support.v4.content.ContextCompat;
 import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.app.AppCompatActivity;
 import android.text.TextUtils;
 import android.util.Log;
+import android.webkit.DownloadListener;
 import android.webkit.JsResult;
 import android.webkit.ValueCallback;
 import android.webkit.WebChromeClient;
@@ -22,7 +28,10 @@ import android.webkit.WebResourceResponse;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
+import android.widget.Toast;
 
+import com.gun0912.tedpermission.PermissionListener;
+import com.gun0912.tedpermission.TedPermission;
 import com.neonex.nsok.R;
 import com.neonex.nsok.common.Nsok;
 import com.neonex.nsok.common.ReceiverEvent;
@@ -38,6 +47,7 @@ import org.greenrobot.eventbus.ThreadMode;
 import java.io.File;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.Iterator;
 import java.util.Set;
@@ -49,8 +59,6 @@ public class MainActivity extends AppCompatActivity {
     private String mAddress = Nsok.connWebUrl + "/mobile/index.do";
 
     private NsokBridge mNsokBridge = null;
-
-    private static final String TYPE_IMAGE = "image/*";
     private static final int INPUT_FILE_REQUEST_CODE = 1;
     private ValueCallback<Uri> mUploadMessage;
     private ValueCallback<Uri[]> mFilePathCallback;
@@ -62,8 +70,12 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+        getPermissionMarshmallow(); // 마시멜로우 권한 확인
+
         Bundle bundle = getIntent().getExtras();
 
+        Log.e(getLocalClassName(), "onCreate");
         if (bundle != null) {
             Set<String> keyset = bundle.keySet();
             for (Iterator<String> it = keyset.iterator(); it.hasNext(); ) {
@@ -93,6 +105,34 @@ public class MainActivity extends AppCompatActivity {
         mAppExitPreventHandler = new AppExitPreventUtil(this);
     }
 
+    /**
+     * 마시멜로우 권한 체크
+     *
+     */
+    private void getPermissionMarshmallow(){
+
+
+        PermissionListener permissionlistener = new PermissionListener() {
+            @Override
+            public void onPermissionGranted() {
+
+            }
+
+            @Override
+            public void onPermissionDenied(ArrayList<String> deniedPermissions) {
+                Toast.makeText(MainActivity.this, "Permission Denied\n" + deniedPermissions.toString(), Toast.LENGTH_SHORT).show();
+                finish();
+            }
+        };
+
+        new TedPermission(this)
+                .setPermissionListener(permissionlistener)
+                .setRationaleMessage(getString(R.string.and_ver_m_permission_message_1))
+//                .setDeniedMessage("If you reject permission,you can not use this service\n\nPlease turn on permissions at [Setting] > [Permission]")
+                .setGotoSettingButtonText("setting").setPermissions(Manifest.permission.READ_EXTERNAL_STORAGE, Manifest.permission.WRITE_EXTERNAL_STORAGE )
+                .check();
+    }
+
     @Override
     protected void onStart() {
         super.onStart();
@@ -119,7 +159,7 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onNewIntent(Intent intent) {
         super.onNewIntent(intent);
-
+        Log.e(getLocalClassName(), "onNewIntent");
         Bundle bundle = intent.getExtras();
 
         if (bundle != null) {
@@ -144,6 +184,7 @@ public class MainActivity extends AppCompatActivity {
         mNsokWebView = (WebView) findViewById(R.id.nsok_webView);
         mNsokWebView.setWebChromeClient(new NsokWebChromeClient());
         mNsokWebView.setWebViewClient(new NsokWebViewClient());
+        mNsokWebView.setDownloadListener(mDownloadListener);
         mNsokWebView.setScrollContainer(true);
         mNsokWebView.addJavascriptInterface(mNsokBridge, "nsokBridge");
         mNsokWebView.clearView();
@@ -151,6 +192,9 @@ public class MainActivity extends AppCompatActivity {
         mNsokWebView.requestFocus();
         mNsokWebView.requestFocusFromTouch();
         mNsokWebView.getSettings().setJavaScriptEnabled(true);
+        if (Build.VERSION.SDK_INT > Build.VERSION_CODES.ICE_CREAM_SANDWICH) {
+            mNsokWebView.getSettings().setTextZoom(100);
+        }
         mNsokWebView.loadUrl(mAddress);
 
 
@@ -173,6 +217,44 @@ public class MainActivity extends AppCompatActivity {
     public void onMessage(ReceiverEvent event) {
         mAddress = event.message;
     }
+
+    private DownloadListener mDownloadListener = new DownloadListener() {
+        @Override
+        public void onDownloadStart(String url, String userAgent, String contentDisposition, String mimeType, long contentLength) {
+            try {
+                DownloadManager.Request request = new DownloadManager.Request(Uri.parse(url));
+                request.setMimeType(mimeType);
+                request.addRequestHeader("User-Agent", userAgent);
+                request.setDescription("Downloading file");
+                String fileName = contentDisposition.replace("inline; filename=", "");
+                fileName = fileName.replaceAll("\"", "");
+                request.setTitle(fileName);
+                request.allowScanningByMediaScanner();
+                request.setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED);
+                request.setDestinationInExternalPublicDir(Environment.DIRECTORY_DOWNLOADS, fileName);
+                DownloadManager dm = (DownloadManager) getSystemService(DOWNLOAD_SERVICE);
+                dm.enqueue(request);
+                Toast.makeText(getApplicationContext(), "Downloading File", Toast.LENGTH_LONG).show();
+            } catch (Exception e) {
+
+                if (ContextCompat.checkSelfPermission(MainActivity.this,
+                        android.Manifest.permission.WRITE_EXTERNAL_STORAGE)
+                        != PackageManager.PERMISSION_GRANTED) {
+                    // Should we show an explanation?
+                    if (ActivityCompat.shouldShowRequestPermissionRationale(MainActivity.this,
+                            android.Manifest.permission.WRITE_EXTERNAL_STORAGE)) {
+                        Toast.makeText(getBaseContext(), "첨부파일 다운로드를 위해\n동의가 필요합니다.", Toast.LENGTH_LONG).show();
+                        ActivityCompat.requestPermissions(MainActivity.this, new String[]{android.Manifest.permission.WRITE_EXTERNAL_STORAGE},
+                                110);
+                    } else {
+                        Toast.makeText(getBaseContext(), "첨부파일 다운로드를 위해\n동의가 필요합니다.", Toast.LENGTH_LONG).show();
+                        ActivityCompat.requestPermissions(MainActivity.this, new String[]{android.Manifest.permission.WRITE_EXTERNAL_STORAGE},
+                                110);
+                    }
+                }
+            }
+        }
+    };
 
     final class NsokWebChromeClient extends WebChromeClient {
 
@@ -211,19 +293,17 @@ public class MainActivity extends AppCompatActivity {
             mUploadMessage = uploadMsg;
             Intent intent = new Intent(Intent.ACTION_GET_CONTENT);
             intent.addCategory(Intent.CATEGORY_OPENABLE);
-            intent.setType(TYPE_IMAGE);
+            intent.setType("video/*, image/*");
             startActivityForResult(intent, INPUT_FILE_REQUEST_CODE);
         }
 
         // For 3.0 <= Android Version < 4.1
         public void openFileChooser(ValueCallback<Uri> uploadMsg, String acceptType) {
-            //System.out.println("WebViewActivity 3<A<4.1, OS Version : " + Build.VERSION.SDK_INT + "\t openFC(VCU,aT), n=2");
             openFileChooser(uploadMsg, acceptType, "");
         }
 
         // For 4.1 <= Android Version < 5.0
         public void openFileChooser(ValueCallback<Uri> uploadFile, String acceptType, String capture) {
-            Log.d(getClass().getName(), "openFileChooser : " + acceptType + "/" + capture);
             mUploadMessage = uploadFile;
             imageChooser();
         }
@@ -232,7 +312,6 @@ public class MainActivity extends AppCompatActivity {
         // Ref: https://github.com/GoogleChrome/chromium-webview-samples/blob/master/input-file-example/app/src/main/java/inputfilesample/android/chrome/google/com/inputfilesample/MainFragment.java
         public boolean onShowFileChooser(WebView webView,
                                          ValueCallback<Uri[]> filePathCallback, FileChooserParams fileChooserParams) {
-            System.out.println("WebViewActivity A>5, OS Version : " + Build.VERSION.SDK_INT + "\t onSFC(WV,VCUB,FCP), n=3");
             if (mFilePathCallback != null) {
                 mFilePathCallback.onReceiveValue(null);
             }
@@ -251,7 +330,6 @@ public class MainActivity extends AppCompatActivity {
                     takePictureIntent.putExtra("PhotoPath", mCameraPhotoPath);
                 } catch (IOException ex) {
                     // Error occurred while creating the File
-                    Log.e(getClass().getName(), "Unable to create Image File", ex);
                 }
 
                 // Continue only if the File was successfully created
@@ -266,21 +344,21 @@ public class MainActivity extends AppCompatActivity {
 
             Intent contentSelectionIntent = new Intent(Intent.ACTION_GET_CONTENT);
             contentSelectionIntent.addCategory(Intent.CATEGORY_OPENABLE);
-            contentSelectionIntent.setType(TYPE_IMAGE);
+            contentSelectionIntent.setType("*/*");
 
-            Intent[] intentArray;
-            if (takePictureIntent != null) {
-                intentArray = new Intent[]{takePictureIntent};
-            } else {
-                intentArray = new Intent[0];
-            }
+//            Intent[] intentArray;
+//            if (takePictureIntent != null) {
+//                intentArray = new Intent[]{takePictureIntent};
+//            } else {
+//                intentArray = new Intent[0];
+//            }
+//
+//            Intent chooserIntent = new Intent(Intent.ACTION_CHOOSER);
+//            chooserIntent.putExtra(Intent.EXTRA_INTENT, contentSelectionIntent);
+//            chooserIntent.putExtra(Intent.EXTRA_TITLE, "뭐라고 쓰지?");
+//            chooserIntent.putExtra(Intent.EXTRA_INITIAL_INTENTS, intentArray);
 
-            Intent chooserIntent = new Intent(Intent.ACTION_CHOOSER);
-            chooserIntent.putExtra(Intent.EXTRA_INTENT, contentSelectionIntent);
-            chooserIntent.putExtra(Intent.EXTRA_TITLE, "Image Chooser");
-            chooserIntent.putExtra(Intent.EXTRA_INITIAL_INTENTS, intentArray);
-
-            startActivityForResult(chooserIntent, INPUT_FILE_REQUEST_CODE);
+            startActivityForResult(contentSelectionIntent, INPUT_FILE_REQUEST_CODE);
         }
 
     }

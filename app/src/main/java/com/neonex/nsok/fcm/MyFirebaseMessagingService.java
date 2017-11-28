@@ -1,5 +1,6 @@
 package com.neonex.nsok.fcm;
 
+import android.app.Notification;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.content.Context;
@@ -7,6 +8,7 @@ import android.content.Intent;
 import android.graphics.BitmapFactory;
 import android.media.RingtoneManager;
 import android.net.Uri;
+import android.support.v4.content.ContextCompat;
 import android.support.v7.app.NotificationCompat;
 
 import com.google.firebase.messaging.RemoteMessage;
@@ -39,7 +41,6 @@ public class MyFirebaseMessagingService extends FirebaseMessagingService {
             try {
                 Map<String, String> params = remoteMessage.getData();
                 JSONObject object = new JSONObject(params);
-                NsokLog.d("JSON_OBJECT", object.toString());
             } catch (Exception e) {
                 e.printStackTrace();
             }
@@ -61,10 +62,12 @@ public class MyFirebaseMessagingService extends FirebaseMessagingService {
 
         Uri defaultSoundUri = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION);
         android.support.v4.app.NotificationCompat.Builder notificationBuilder = new NotificationCompat.Builder(this)
-                .setSmallIcon(R.mipmap.ic_notification_small)
+                .setSmallIcon(R.drawable.ic_notification_small)
+                .setPriority(Notification.PRIORITY_MAX)
                 .setContentTitle(remoteMessage.getNotification().getTitle().toString())
                 .setContentText(remoteMessage.getNotification().getBody().toString())
                 .setAutoCancel(true)
+                .setColor(ContextCompat.getColor(this, R.color.statusBarColor))
                 .setSound(defaultSoundUri).setLights(000000255, 500, 2000)
                 .setVibrate(new long[] {1000, 1000, 1000})
                 .setContentIntent(pendingIntent);
