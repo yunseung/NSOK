@@ -2,4 +2,7 @@
     <string name="app_name">NSOK</string>
     <string name="app_exit_message">"\'뒤로\'버튼을 한 번 더 누르시면 앱이 종료됩니다."</string>
     <string name="and_ver_m_permission_message_1">반드시 다음 작업을 허용 하셔야 합니다!</string>
+    <string name="notification_error_ssl_cert_invalid">신뢰할 수 없는 페이지 입니다.\n계속 진행 하시려면 확인 버튼을 눌러주세요.</string>
+    <string name="ok">확인</string>
+    <string name="nok">취소</string>
 </resources>

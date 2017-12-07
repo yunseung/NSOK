@@ -3,10 +3,12 @@ package com.neonex.nsok.activity;
 import android.Manifest;
 import android.annotation.TargetApi;
 import android.app.DownloadManager;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.net.Uri;
+import android.net.http.SslError;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
@@ -15,11 +17,13 @@ import android.provider.MediaStore;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v4.widget.SwipeRefreshLayout;
+import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.text.TextUtils;
 import android.util.Log;
 import android.webkit.DownloadListener;
 import android.webkit.JsResult;
+import android.webkit.SslErrorHandler;
 import android.webkit.ValueCallback;
 import android.webkit.WebChromeClient;
 import android.webkit.WebResourceError;
@@ -75,7 +79,6 @@ public class MainActivity extends AppCompatActivity {
 
         Bundle bundle = getIntent().getExtras();
 
-        Log.e(getLocalClassName(), "onCreate");
         if (bundle != null) {
             Set<String> keyset = bundle.keySet();
             for (Iterator<String> it = keyset.iterator(); it.hasNext(); ) {
@@ -159,7 +162,6 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onNewIntent(Intent intent) {
         super.onNewIntent(intent);
-        Log.e(getLocalClassName(), "onNewIntent");
         Bundle bundle = intent.getExtras();
 
         if (bundle != null) {
@@ -194,6 +196,10 @@ public class MainActivity extends AppCompatActivity {
         mNsokWebView.getSettings().setJavaScriptEnabled(true);
         if (Build.VERSION.SDK_INT > Build.VERSION_CODES.ICE_CREAM_SANDWICH) {
             mNsokWebView.getSettings().setTextZoom(100);
+        }
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP)
+        {
+            mNsokWebView.getSettings().setMixedContentMode(WebSettings.MIXED_CONTENT_ALWAYS_ALLOW);
         }
         mNsokWebView.loadUrl(mAddress);
 
@@ -414,6 +420,25 @@ public class MainActivity extends AppCompatActivity {
     }
 
     final class NsokWebViewClient extends WebViewClient {
+        @Override
+        public void onReceivedSslError(WebView view, final SslErrorHandler handler, SslError error) {
+            final AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
+            builder.setMessage(R.string.notification_error_ssl_cert_invalid);
+            builder.setPositiveButton(R.string.ok, new DialogInterface.OnClickListener() {
+                @Override
+                public void onClick(DialogInterface dialog, int which) {
+                    handler.proceed();
+                }
+            });
+            builder.setNegativeButton(R.string.nok, new DialogInterface.OnClickListener() {
+                @Override
+                public void onClick(DialogInterface dialog, int which) {
+                    handler.cancel();
+                }
+            });
+            final AlertDialog dialog = builder.create();
+            dialog.show();
+        }
 
         @Override
         public void onPageStarted(WebView view, String url, Bitmap favicon) {
@@ -423,7 +448,6 @@ public class MainActivity extends AppCompatActivity {
         @Override
         public void onPageFinished(WebView view, String url) {
             super.onPageFinished(view, url);
-
             mNsokWebView.invalidate();
             mSwipeRefreshLayout.setRefreshing(false);
         }

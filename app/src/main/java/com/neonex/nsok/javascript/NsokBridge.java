@@ -28,7 +28,6 @@ public class NsokBridge {
 
     @JavascriptInterface
     public void sendToken() {
-        Log.e("NsokBridge.java", "JavascriptInterface called");
         mOnFcmTokenSendListener.sendFcmToken();
     }
 }
