@@ -6,7 +6,7 @@ import com.google.firebase.iid.FirebaseInstanceIdService;
 
 public class FirebaseInstanceIDService extends FirebaseInstanceIdService {
 
-    private static final String TAG = "MyFirebaseIIDService";
+    private static final String TAG = "MyFirebaseIDService";
 
     // [START refresh_token]
     @Override
